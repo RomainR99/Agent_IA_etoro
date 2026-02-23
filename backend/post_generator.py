@@ -1,6 +1,8 @@
 """Génération du post eToro via OpenAI."""
 import os
 from pathlib import Path
+
+import openai
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -26,12 +28,19 @@ def generate_post(news_text: str) -> str:
         raise ValueError("Variable d'environnement OPENAI_API_KEY manquante. Ajoutez-la dans .env.")
     client = OpenAI(api_key=api_key)
     system_prompt = load_system_prompt()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Texte fourni :\n\n{news_text}\n\nGénère le post eToro."},
-        ],
-        temperature=0.6,
-    )
-    return response.choices[0].message.content.strip()
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Texte fourni :\n\n{news_text}\n\nGénère le post eToro."},
+            ],
+            temperature=0.6,
+        )
+        return response.choices[0].message.content.strip()
+    except openai.RateLimitError as e:
+        raise ValueError("Quota API dépassé. Vérifiez votre facturation sur platform.openai.com.") from e
+    except openai.APIConnectionError as e:
+        raise ValueError("Impossible de se connecter à l'API OpenAI. Vérifiez votre connexion.") from e
+    except openai.APIError as e:
+        raise ValueError(f"Erreur API OpenAI : {e}") from e
