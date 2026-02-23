@@ -1,6 +1,7 @@
 """Génération d'une image OpenAI (DALL-E 3) à partir du post eToro."""
 import base64
 import os
+from pathlib import Path
 
 import openai
 from openai import OpenAI
@@ -8,19 +9,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+PROMPT_IMAGE_PATH = Path(__file__).resolve().parent.parent / "prompts" / "prompt_image_etoro.txt"
+
+
+def _load_image_prompt_system() -> str:
+    """Charge le prompt système pour la génération du prompt image."""
+    with open(PROMPT_IMAGE_PATH, "r", encoding="utf-8") as f:
+        return f.read().strip()
+
 
 def _create_image_prompt(post_text: str, client: OpenAI) -> str:
     """Utilise GPT pour créer un prompt image professionnel à partir du post."""
     try:
+        system_prompt = _load_image_prompt_system()
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {
-                    "role": "system",
-                    "content": "Tu crées des prompts pour DALL-E 3. Réponds UNIQUEMENT par le prompt en anglais, "
-                    "2-3 phrases max. Style : infographie professionnelle, finance/investissement, "
-                    "design épuré, graphiques, tendances. Pas de texte dans l'image. Pas de visages.",
-                },
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Post eToro à illustrer :\n\n{post_text[:1500]}"},
             ],
             temperature=0.5,
