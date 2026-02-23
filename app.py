@@ -93,10 +93,20 @@ if st.session_state.get("post_generated") and st.session_state.get("post"):
             for i, p in enumerate(prompt_options):
                 st.caption(f"**Prompt {i+1}**")
                 st.text(p)
+
+        st.subheader("Ou saisir votre propre prompt")
+        custom_prompt = st.text_area(
+            "Saisissez votre propre prompt pour l'image (laisser vide pour utiliser un des 3 ci-dessus)",
+            placeholder="Ex. : Illustration style cartoon, couleurs vives, un graphique en hausse…",
+            height=80,
+            label_visibility="collapsed",
+        )
+
         if st.button("Générer l'image", type="primary"):
+            prompt_to_use = custom_prompt.strip() if custom_prompt and custom_prompt.strip() else prompt_options[selected]
             with st.spinner("Génération de l'image…"):
                 try:
-                    img_bytes = generate_post_image(prompt_options[selected])
+                    img_bytes = generate_post_image(prompt_to_use)
                     st.session_state["post_image"] = img_bytes
                     st.session_state.pop("post_image_error", None)
                     st.rerun()
