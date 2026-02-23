@@ -13,7 +13,7 @@ PROMPT_IMAGE_PATH = Path(__file__).resolve().parent.parent / "prompts" / "prompt
 
 # Préfixe ajouté en dur au début de chaque prompt image
 PROMPT_IMAGE_PREFIX = (
-    "Cartoon style illustration, vivid colors, bold outlines, dynamic composition, no text, no speech bubbles."
+    "Illustration style cartoon, couleurs vives, contours marqués, composition dynamique, sans texte, sans bulles de dialogue."
 )
 
 
