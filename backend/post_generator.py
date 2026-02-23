@@ -30,7 +30,7 @@ def generate_post(news_text: str) -> str:
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Actualités récentes France :\n\n{news_text}\n\nGénère le post eToro."},
+            {"role": "user", "content": f"Texte fourni :\n\n{news_text}\n\nGénère le post eToro."},
         ],
         temperature=0.6,
     )
