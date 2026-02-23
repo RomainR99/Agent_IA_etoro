@@ -1,6 +1,4 @@
-groq
+openai
 python-dotenv
+requests
 streamlit
-pypdf
-python-docx
-reportlab
