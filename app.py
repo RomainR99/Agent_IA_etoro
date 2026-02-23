@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from backend.post_generator import generate_post
+from backend.image_generator import generate_post_image
 
 st.set_page_config(
     page_title="Agent IA eToro",
@@ -57,16 +58,30 @@ if generate_btn:
     if not input_text or not input_text.strip():
         st.error("Veuillez saisir ou coller un texte avant de générer le post.")
     else:
-        with st.spinner("Génération du post avec OpenAI…"):
+        with st.spinner("Génération du post et de l'image avec OpenAI…"):
             try:
                 post = generate_post(input_text.strip())
                 st.session_state["post"] = post
                 st.session_state["post_generated"] = True
+                img_bytes = generate_post_image(post)
+                st.session_state["post_image"] = img_bytes
             except Exception as e:
+                st.session_state.pop("post_image", None)
                 st.error(f"Erreur : {e}")
 
 if st.session_state.get("post_generated") and st.session_state.get("post"):
     st.markdown("---")
     st.markdown(st.session_state["post"])
+
+    if st.session_state.get("post_image"):
+        st.subheader("Image proposée")
+        st.image(st.session_state["post_image"], use_container_width=True)
+        st.download_button(
+            "Télécharger l'image",
+            data=st.session_state["post_image"],
+            file_name="post_etoro.png",
+            mime="image/png",
+            type="primary",
+        )
 else:
     st.info("Collez un texte dans la zone ci-dessus, puis cliquez sur « Générer le post ».")
