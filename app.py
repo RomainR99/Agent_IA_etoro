@@ -78,7 +78,17 @@ if generate_btn:
 
 if st.session_state.get("post_generated") and st.session_state.get("post"):
     st.markdown("---")
-    st.markdown(st.session_state["post"])
+    post_text = st.session_state["post"]
+    if "--- FRANÇAIS ---" in post_text and "--- ENGLISH ---" in post_text:
+        fr_part, en_part = post_text.split("--- ENGLISH ---", 1)
+        fr_part = fr_part.replace("--- FRANÇAIS ---", "").strip()
+        en_part = en_part.strip()
+        with st.expander("🇫🇷 Français", expanded=True):
+            st.markdown(fr_part)
+        with st.expander("🇬🇧 English", expanded=False):
+            st.markdown(en_part)
+    else:
+        st.markdown(post_text)
 
     prompt_options = st.session_state.get("prompt_options")
     if prompt_options:

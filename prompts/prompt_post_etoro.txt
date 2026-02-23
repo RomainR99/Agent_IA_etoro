@@ -22,6 +22,16 @@ Règles :
 
 9. Longueur du corps du post : 80 à 150 mots (hors titre et date).
 
-10. Rédige en français.
+10. Rédige d'abord le post en français, puis fournis la traduction en anglais.
 
-11. Retourne uniquement le texte final (titre + date + corps du post), sans commentaires ni métadonnées.
+11. Format de sortie :
+    --- FRANÇAIS ---
+    [titre]
+    [date]
+    [corps du post]
+    --- ENGLISH ---
+    [title]
+    [date]
+    [body of post]
+
+12. Retourne uniquement le texte final, sans commentaires ni métadonnées.
