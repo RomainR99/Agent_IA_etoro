@@ -58,16 +58,23 @@ if generate_btn:
     if not input_text or not input_text.strip():
         st.error("Veuillez saisir ou coller un texte avant de générer le post.")
     else:
-        with st.spinner("Génération du post et de l'image avec OpenAI…"):
+        with st.spinner("Génération du post avec OpenAI…"):
             try:
                 post = generate_post(input_text.strip())
                 st.session_state["post"] = post
                 st.session_state["post_generated"] = True
+                st.session_state.pop("post_image", None)
+                st.session_state.pop("post_image_error", None)
+            except Exception as e:
+                st.error(f"Erreur : {e}")
+                st.stop()
+        with st.spinner("Génération de l'image…"):
+            try:
                 img_bytes = generate_post_image(post)
                 st.session_state["post_image"] = img_bytes
+                st.session_state.pop("post_image_error", None)
             except Exception as e:
-                st.session_state.pop("post_image", None)
-                st.error(f"Erreur : {e}")
+                st.session_state["post_image_error"] = str(e)
 
 if st.session_state.get("post_generated") and st.session_state.get("post"):
     st.markdown("---")
@@ -82,6 +89,11 @@ if st.session_state.get("post_generated") and st.session_state.get("post"):
             file_name="post_etoro.png",
             mime="image/png",
             type="primary",
+        )
+    elif st.session_state.get("post_image_error"):
+        st.warning(
+            "Image non générée (quota API ou facturation OpenAI). "
+            "Vérifiez votre compte sur platform.openai.com."
         )
 else:
     st.info("Collez un texte dans la zone ci-dessus, puis cliquez sur « Générer le post ».")
