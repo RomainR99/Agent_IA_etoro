@@ -11,6 +11,11 @@ load_dotenv()
 
 PROMPT_IMAGE_PATH = Path(__file__).resolve().parent.parent / "prompts" / "prompt_image_etoro.txt"
 
+# Suffixe ajouté en dur à chaque prompt image
+PROMPT_IMAGE_SUFFIX = (
+    "Cartoon style illustration, vivid colors, bold outlines, dynamic composition, no text, no speech bubbles."
+)
+
 
 def _load_image_prompt_system() -> str:
     """Charge le prompt système pour la génération du prompt image."""
@@ -18,19 +23,37 @@ def _load_image_prompt_system() -> str:
         return f.read().strip()
 
 
-def _create_image_prompt(post_text: str, client: OpenAI) -> str:
-    """Utilise GPT pour créer un prompt image professionnel à partir du post."""
+def _create_image_prompts(post_text: str, client: OpenAI) -> list[str]:
+    """Utilise GPT pour créer 3 prompts image différents à partir du post."""
     try:
-        system_prompt = _load_image_prompt_system()
+        system_prompt = (
+            _load_image_prompt_system()
+            + "\n\nPropose exactement 3 variantes de prompts, numérotées 1, 2, 3, une par ligne. "
+            "Format : 1. [prompt] 2. [prompt] 3. [prompt]"
+        )
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Post eToro à illustrer :\n\n{post_text[:1500]}"},
             ],
-            temperature=0.5,
+            temperature=0.8,
         )
-        return response.choices[0].message.content.strip()
+        text = response.choices[0].message.content.strip()
+        prompts = []
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            for prefix in ("1.", "2.", "3.", "1)", "2)", "3)"):
+                if line.lower().startswith(prefix):
+                    prompt = line[len(prefix) :].strip().lstrip(".- )")
+                    if len(prompt) > 5:
+                        prompts.append(f"{prompt}. {PROMPT_IMAGE_SUFFIX}")
+                    break
+        while len(prompts) < 3:
+            prompts.append(PROMPT_IMAGE_SUFFIX)
+        return prompts[:3]
     except openai.RateLimitError:
         raise ValueError("Quota API dépassé. Vérifiez votre facturation sur platform.openai.com.")
     except openai.APIConnectionError:
@@ -39,17 +62,25 @@ def _create_image_prompt(post_text: str, client: OpenAI) -> str:
         raise ValueError(f"Erreur API OpenAI : {e}") from e
 
 
-def generate_post_image(post_text: str) -> bytes:
+def create_image_prompt_options(post_text: str) -> list[str]:
+    """Retourne 3 propositions de prompts pour l'image."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY manquante dans .env ou Secrets.")
+    client = OpenAI(api_key=api_key)
+    return _create_image_prompts(post_text, client)
+
+
+def generate_post_image(prompt: str) -> bytes:
     """
-    Génère une image DALL-E 3 illustrant le post.
-    :param post_text: contenu du post eToro
+    Génère une image DALL-E 3 à partir du prompt fourni.
+    :param prompt: prompt complet pour DALL-E 3
     :return: bytes de l'image PNG
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY manquante dans .env ou Secrets.")
     client = OpenAI(api_key=api_key)
-    prompt = _create_image_prompt(post_text, client)
     try:
         response = client.images.generate(
             model="dall-e-3",

@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from backend.post_generator import generate_post
-from backend.image_generator import generate_post_image
+from backend.image_generator import create_image_prompt_options, generate_post_image
 
 st.set_page_config(
     page_title="Agent IA eToro",
@@ -65,13 +65,13 @@ if generate_btn:
                 st.session_state["post_generated"] = True
                 st.session_state.pop("post_image", None)
                 st.session_state.pop("post_image_error", None)
+                st.session_state.pop("prompt_options", None)
             except Exception as e:
                 st.error(f"Erreur : {e}")
                 st.stop()
-        with st.spinner("Génération de l'image…"):
+        with st.spinner("Proposition des 3 prompts image…"):
             try:
-                img_bytes = generate_post_image(post)
-                st.session_state["post_image"] = img_bytes
+                st.session_state["prompt_options"] = create_image_prompt_options(post)
                 st.session_state.pop("post_image_error", None)
             except Exception as e:
                 st.session_state["post_image_error"] = str(e)
@@ -79,6 +79,30 @@ if generate_btn:
 if st.session_state.get("post_generated") and st.session_state.get("post"):
     st.markdown("---")
     st.markdown(st.session_state["post"])
+
+    prompt_options = st.session_state.get("prompt_options")
+    if prompt_options:
+        st.subheader("Choisir le prompt pour l'image")
+        selected = st.radio(
+            "Sélectionnez un prompt :",
+            range(len(prompt_options)),
+            format_func=lambda i: f"Prompt {i+1}",
+            label_visibility="collapsed",
+        )
+        with st.expander("Voir les prompts", expanded=True):
+            for i, p in enumerate(prompt_options):
+                st.caption(f"**Prompt {i+1}**")
+                st.text(p)
+        if st.button("Générer l'image", type="primary"):
+            with st.spinner("Génération de l'image…"):
+                try:
+                    img_bytes = generate_post_image(prompt_options[selected])
+                    st.session_state["post_image"] = img_bytes
+                    st.session_state.pop("post_image_error", None)
+                    st.rerun()
+                except Exception as e:
+                    st.session_state["post_image_error"] = str(e)
+                    st.error(f"Erreur : {e}")
 
     if st.session_state.get("post_image"):
         st.subheader("Image proposée")
@@ -90,7 +114,7 @@ if st.session_state.get("post_generated") and st.session_state.get("post"):
             mime="image/png",
             type="primary",
         )
-    elif st.session_state.get("post_image_error"):
+    elif st.session_state.get("post_image_error") and not prompt_options:
         st.warning(
             "Image non générée (quota API ou facturation OpenAI). "
             "Vérifiez votre compte sur platform.openai.com."
