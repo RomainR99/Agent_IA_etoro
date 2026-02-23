@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from backend.post_generator import generate_post
-from backend.image_generator import create_image_prompt_options, generate_post_image
+from backend.image_generator import create_image_prompt_options, generate_post_image, get_default_image_prompt
 
 st.set_page_config(
     page_title="Agent IA eToro",
@@ -96,8 +96,8 @@ if st.session_state.get("post_generated") and st.session_state.get("post"):
 
         st.subheader("Ou saisir votre propre prompt")
         custom_prompt = st.text_area(
-            "Saisissez votre propre prompt pour l'image (laisser vide pour utiliser un des 3 ci-dessus)",
-            placeholder="Ex. : Illustration style cartoon, couleurs vives, un graphique en hausse…",
+            "Saisissez votre propre prompt (modifier ou vider pour utiliser un des 3 ci-dessus)",
+            value=get_default_image_prompt(),
             height=80,
             label_visibility="collapsed",
         )

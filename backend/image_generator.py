@@ -17,6 +17,14 @@ PROMPT_IMAGE_PREFIX = (
 )
 
 
+def get_default_image_prompt() -> str:
+    """Retourne le prompt image par défaut (lignes 3-6 de prompt_image_etoro.txt)."""
+    with open(PROMPT_IMAGE_PATH, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    content = "".join(lines[2:6]).strip()  # lignes 3 à 6 (index 2 à 5)
+    return f"{PROMPT_IMAGE_PREFIX} {content}"
+
+
 def _load_image_prompt_system() -> str:
     """Charge le prompt système pour la génération du prompt image."""
     with open(PROMPT_IMAGE_PATH, "r", encoding="utf-8") as f:
@@ -59,7 +67,18 @@ def _create_image_prompts(post_text: str, client: OpenAI) -> list[str]:
     except openai.APIConnectionError:
         raise ValueError("Impossible de se connecter à l'API OpenAI. Vérifiez votre connexion.")
     except openai.APIError as e:
-        raise ValueError(f"Erreur API OpenAI : {e}") from e
+        _raise_friendly_api_error(e)
+
+
+def _raise_friendly_api_error(e: Exception) -> None:
+    """Relance avec un message en français pour les erreurs courantes."""
+    err_str = str(e).lower()
+    if "content_policy" in err_str or "safety system" in err_str:
+        raise ValueError(
+            "Le prompt a été refusé par le filtre de sécurité OpenAI. "
+            "Essayez un prompt plus neutre ou utilisez une formulation différente."
+        ) from e
+    raise ValueError(f"Erreur API OpenAI : {e}") from e
 
 
 def create_image_prompt_options(post_text: str) -> list[str]:
@@ -97,4 +116,4 @@ def generate_post_image(prompt: str) -> bytes:
     except openai.APIConnectionError:
         raise ValueError("Impossible de se connecter à l'API OpenAI. Vérifiez votre connexion.")
     except openai.APIError as e:
-        raise ValueError(f"Erreur API OpenAI : {e}") from e
+        _raise_friendly_api_error(e)
