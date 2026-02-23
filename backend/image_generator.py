@@ -11,8 +11,8 @@ load_dotenv()
 
 PROMPT_IMAGE_PATH = Path(__file__).resolve().parent.parent / "prompts" / "prompt_image_etoro.txt"
 
-# Suffixe ajouté en dur à chaque prompt image
-PROMPT_IMAGE_SUFFIX = (
+# Préfixe ajouté en dur au début de chaque prompt image
+PROMPT_IMAGE_PREFIX = (
     "Cartoon style illustration, vivid colors, bold outlines, dynamic composition, no text, no speech bubbles."
 )
 
@@ -49,10 +49,10 @@ def _create_image_prompts(post_text: str, client: OpenAI) -> list[str]:
                 if line.lower().startswith(prefix):
                     prompt = line[len(prefix) :].strip().lstrip(".- )")
                     if len(prompt) > 5:
-                        prompts.append(f"{prompt}. {PROMPT_IMAGE_SUFFIX}")
+                        prompts.append(f"{PROMPT_IMAGE_PREFIX} {prompt}")
                     break
         while len(prompts) < 3:
-            prompts.append(PROMPT_IMAGE_SUFFIX)
+            prompts.append(PROMPT_IMAGE_PREFIX)
         return prompts[:3]
     except openai.RateLimitError:
         raise ValueError("Quota API dépassé. Vérifiez votre facturation sur platform.openai.com.")
